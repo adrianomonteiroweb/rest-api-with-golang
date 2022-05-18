@@ -1,13 +1,14 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 type todo struct {
-	ID					string `json:"id`
-	Item 				string `json:"item`
+	ID		string `json:"id`
+	Item 		string `json:"item`
 	Completed		bool   `json:"complete`
 }
 
@@ -19,6 +20,28 @@ var todos = []todo{
 
 func getTodos(context *gin.Context) {
 	context.IndentedJSON(http.StatusOK, todos)
+}
+
+func getTodo(context *gin.Context) {
+	id := context.Param("id")
+	todo, err := getTodoById(id)
+
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Todo not found."})
+
+		return
+	}
+
+	context.IndentedJSON(http.StatusOK, todo)
+}
+
+func getTodoById(id string) (*todo, error) {
+	for index, todo := range todos {
+		if todo.ID == id {
+			return &todos[index], nil
+		}
+	}
+	return nil, errors.New("Todo not found.")
 }
 
 func postTodos(context *gin.Context) {
@@ -36,6 +59,7 @@ func postTodos(context *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.GET("/todos", getTodos)
+	router.GET("/todos/:id", getTodo)
 	router.POST("/todos", postTodos)
 	router.Run("localhost:9090")
 }
